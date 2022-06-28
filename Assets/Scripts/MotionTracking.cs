@@ -928,7 +928,7 @@ class MotionTracking
 	static public EyeInfo calcEyes(Vector4[] lm, float high = 0.85f, float low = 0.55f)
 	{
 		//return early if no iris tracking
-		if (lm.Length != 478)
+		if (lm.Length != 468)
 		{
 			return new EyeInfo()
 			{
@@ -953,8 +953,10 @@ class MotionTracking
 	*/
 	static public PupilPos calcPupils(Vector4[] lm)
 	{
+		return new PupilPos() { x = 0.0f, y = 0.0f };
+		
 		//pupil x:[-1,1],y:[-1,1]
-		if (lm.Length != 478)
+		if (lm.Length != 468)
 		{
 			return new PupilPos() { x = 0.0f, y = 0.0f };
 		}
@@ -1005,7 +1007,7 @@ class MotionTracking
 	*/
 	static public float calcBrow(Vector4[] lm)
 	{
-		if (lm.Length != 478)
+		if (lm.Length != 468)
 		{
 			return 0.0f;
 		}

@@ -33,6 +33,8 @@ public class Skelleton : MonoBehaviour
 		{
 			bone.origiRotate = bone.bone.rotation;
 		}
+
+
 	}
 	private void LateUpdate()
 	{
@@ -115,15 +117,9 @@ public class Skelleton : MonoBehaviour
 
 
 		var riggedLegs = MotionTracking.calcLegs(posList);
-		var headPlane = MotionTracking.calcHead(faceList);
-		var mouthInfo = MotionTracking.calcMouth(faceList);
-		var eyeInfo = MotionTracking.calcEyes(faceList);
-		eyeInfo = MotionTracking.stabilizeBlink(eyeInfo, headPlane.y);
-		var pupils = MotionTracking.calcPupils(faceList);
-		var brow = MotionTracking.calcBrow(faceList);
+		
 
-		Debug.Log($"I : {mouthInfo.shape.I}, A : {mouthInfo.shape.A}, E : {mouthInfo.shape.E}, O : {mouthInfo.shape.O}, U : {mouthInfo.shape.U}");
-
+		
 		// var riggedPose = MotionTracking.calcArms2(posList);
 		// RotateBone(HumanBodyBones.RightUpperArm, riggedPose.unscaledUpperArm.rightRot);
 		// RotateBone(HumanBodyBones.RightLowerArm, riggedPose.unscaledLowerArm.rightRot);
@@ -145,9 +141,87 @@ public class Skelleton : MonoBehaviour
 		//RotateBone(HumanBodyBones.LeftLowerLeg, riggedLegs.unscaledUpperLeg.left);
 		// RotateBone(HumanBodyBones.LeftLowerLeg, riggedLegs.LowerLeg.left);
 
-		LocalRotateBone(HumanBodyBones.Neck, headPlane.x, headPlane.y, headPlane.z);
+		ApplyFaceInfo(faceList);
+		
 	}
 
+	void ApplyFaceInfo(Vector4[] faceList)
+	{
+		var headPlane = MotionTracking.calcHead(faceList);
+		var mouthInfo = MotionTracking.calcMouth(faceList);
+		var eyeInfo = MotionTracking.calcEyes(faceList);
+		eyeInfo = MotionTracking.stabilizeBlink(eyeInfo, headPlane.y);
+		var pupils = MotionTracking.calcPupils(faceList);
+		var brow = MotionTracking.calcBrow(faceList);
+
+		Debug.Log($"I : {mouthInfo.shape.I}, A : {mouthInfo.shape.A}, E : {mouthInfo.shape.E}, O : {mouthInfo.shape.O}, U : {mouthInfo.shape.U}");
+
+		//LocalRotateBone(HumanBodyBones.Neck, headPlane.x, headPlane.y, headPlane.z);
+
+		rigFace(headPlane, mouthInfo, eyeInfo, pupils, brow);
+
+	}
+
+	[SerializeField] SkinnedMeshRenderer faceRenderer;
+	string blendShapePrefix = "";
+	void rigFace(HeadPlane head, MouthInfo mouth, EyeInfo eye, PupilPos pupil, float brow)
+	{
+		if (blendShapeKeyValues.Count == 0)
+			InitBlendShapeKeyValues();
+
+		SetBlendShapeValue($"{blendShapePrefix}.eyeBlinkLeft", eye.left);
+		SetBlendShapeValue($"{blendShapePrefix}.eyeBlinkRight", eye.right);
+	}
+
+	void SetBlendShapeValue(string key, float weight)
+	{
+		if (faceRenderer == null)
+			return;
+
+		int index = -1;
+		if (blendShapeValues.ContainsKey(key))
+			index = blendShapeValues[key];
+		
+		if (index == -1)
+			return;
+
+		var frame = blendShapeFrames[index];
+		// var value = (int)((float)frame * weight);
+		var value =  (1.0f - weight) * 100.0f;
+		faceRenderer.SetBlendShapeWeight(index, value);
+
+		Debug.Log($"{key} - {frame}, {value}");
+	}
+
+	Dictionary<int, string> blendShapeKeyValues = new Dictionary<int, string>();
+	Dictionary<int, int> blendShapeFrames = new Dictionary<int, int>();
+	Dictionary<string, int> blendShapeValues = new Dictionary<string, int>();
+	void InitBlendShapeKeyValues()
+	{
+		if (faceRenderer == null)
+			return;
+
+		var faceMesh = faceRenderer.sharedMesh;
+
+		blendShapeKeyValues.Clear();
+		int count = faceMesh.blendShapeCount;
+		for (int i = 0; i < count; ++i)
+		{
+			var name = faceMesh.GetBlendShapeName(i);
+			var frame = faceMesh.GetBlendShapeFrameCount(i);
+			blendShapeKeyValues.Add(i, name);
+			blendShapeFrames.Add(i, frame);
+			blendShapeValues.Add(name, i);
+
+			if (string.IsNullOrEmpty(blendShapePrefix) == true)
+			{
+				var tokens = name.Split('.');
+				blendShapePrefix = tokens[0];
+			}
+
+			Debug.Log($"{i} -> {name}");
+		}
+	}
 
 
 
