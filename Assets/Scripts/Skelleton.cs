@@ -117,9 +117,9 @@ public class Skelleton : MonoBehaviour
 
 
 		var riggedLegs = MotionTracking.calcLegs(posList);
-		
 
-		
+
+
 		// var riggedPose = MotionTracking.calcArms2(posList);
 		// RotateBone(HumanBodyBones.RightUpperArm, riggedPose.unscaledUpperArm.rightRot);
 		// RotateBone(HumanBodyBones.RightLowerArm, riggedPose.unscaledLowerArm.rightRot);
@@ -142,7 +142,7 @@ public class Skelleton : MonoBehaviour
 		// RotateBone(HumanBodyBones.LeftLowerLeg, riggedLegs.LowerLeg.left);
 
 		ApplyFaceInfo(faceList);
-		
+
 	}
 
 	void ApplyFaceInfo(Vector4[] faceList)
@@ -181,13 +181,15 @@ public class Skelleton : MonoBehaviour
 		int index = -1;
 		if (blendShapeValues.ContainsKey(key))
 			index = blendShapeValues[key];
-		
+
 		if (index == -1)
 			return;
 
 		var frame = blendShapeFrames[index];
 		// var value = (int)((float)frame * weight);
-		var value =  (1.0f - weight) * 100.0f;
+		var targetValue = (1.0f - weight) * 100.0f;
+		var curValue = faceRenderer.GetBlendShapeWeight(index);
+		var value = Mathf.Lerp(curValue, targetValue, 0.8f);
 		faceRenderer.SetBlendShapeWeight(index, value);
 
 		Debug.Log($"{key} - {frame}, {value}");
